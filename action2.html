@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>进阶测试｜行动决策模式</title>
+<style>
+*{box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
+body{
+  background:linear-gradient(135deg,#0ea5e9,#22c55e);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px
+}
+.container{
+  background:#fff;
+  border-radius:18px;
+  max-width:780px;
+  width:100%;
+  padding:36px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15)
+}
+h1{text-align:center;margin-bottom:8px}
+.subtitle{text-align:center;color:#64748b;margin-bottom:30px}
+.page{display:none}
+.page.active{display:block}
+
+.question{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:24px;
+  line-height:1.6
+}
+.option{
+  border:2px solid #e5e7eb;
+  border-radius:10px;
+  padding:14px 18px;
+  margin-bottom:14px;
+  cursor:pointer;
+  transition:.2s
+}
+.option:hover{background:#f0f9ff;border-color:#38bdf8}
+
+.btn{
+  margin-top:30px;
+  width:100%;
+  padding:14px;
+  font-size:17px;
+  font-weight:bold;
+  background:#0f172a;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  cursor:pointer
+}
+
+.result-title{
+  text-align:center;
+  font-size:26px;
+  margin-bottom:16px
+}
+.result-block{
+  background:#f8fafc;
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:18px;
+  line-height:1.7
+}
+.highlight{font-weight:bold;color:#0284c7}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- intro -->
+<div id="intro" class="page active">
+<h1>🔍 行动决策模式分析</h1>
+<p class="subtitle">看清你卡住的不是方向，而是决策方式</p>
+<button class="btn" onclick="start()">开始测试</button>
+</div>
+
+<!-- test -->
+<div id="test" class="page">
+<div id="qtext" class="question"></div>
+<div id="options"></div>
+</div>
+
+<!-- result -->
+<div id="result" class="page">
+<div class="result-title" id="rtype"></div>
+
+<div class="result-block" id="rstate"></div>
+<div class="result-block" id="rrisk"></div>
+<div class="result-block highlight" id="rnext"></div>
+
+<button class="btn" onclick="location.reload()">重新测试</button>
+</div>
+
+</div>
+
+<script>
+// 类型
+const TYPES={
+A:"fox",   // 高潜力低落地
+B:"turtle",// 安全焦虑
+C:"monkey",// 行动混乱
+D:"sheep"  // 外部依赖
+};
+
+let scores={fox:0,turtle:0,monkey:0,sheep:0};
+let i=0;
+
+// 情境题（示例 8 题，你可以按这个模板继续加）
+const questions=[
+{
+q:"你已经对现状不满意一段时间了，这时出现一个不确定但有潜力的机会，你更可能：",
+opts:[
+{t:"先用最低成本试一下，看看真实反馈",w:{fox:1,monkey:1}},
+{t:"反复评估风险，暂时不行动",w:{turtle:1}},
+{t:"很快被另一个新方向吸引",w:{monkey:1}},
+{t:"先看别人怎么做再决定",w:{sheep:1}},
+{t:"这种情况我很少遇到 / 都不像我",w:null}
+]
+},
+{
+q:"一个你投入过的方向开始变难时，你通常会：",
+opts:[
+{t:"停下来重新判断值不值得继续",w:{fox:1}},
+{t:"担心坚持下去会不会不安全",w:{turtle:1}},
+{t:"转向新的尝试",w:{monkey:1}},
+{t:"去问别人该不该继续",w:{sheep:1}},
+{t:"以上都不太像",w:null}
+]
+},
+{
+q:"当你需要做重要选择时，更真实的状态是：",
+opts:[
+{t:"我能分析清楚，但很难真正下决定",w:{fox:1}},
+{t:"我会优先选更稳妥的方案",w:{turtle:1}},
+{t:"我倾向先做再说",w:{monkey:1}},
+{t:"我更相信外部建议",w:{sheep:1}},
+{t:"都不符合",w:null}
+]
+},
+{
+q:"你回看过去一年，最常见的感受是：",
+opts:[
+{t:"想法很多，但落地不多",w:{fox:1}},
+{t:"很少冒险，但也有点压抑",w:{turtle:1}},
+{t:"做了很多，但有点散",w:{monkey:1}},
+{t:"一直在参考别人的路径",w:{sheep:1}},
+{t:"以上皆非",w:null}
+]
+}
+];
+
+function start(){
+document.getElementById("intro").classList.remove("active");
+document.getElementById("test").classList.add("active");
+render();
+}
+
+function render(){
+const q=questions[i];
+document.getElementById("qtext").innerText=q.q;
+const box=document.getElementById("options");
+box.innerHTML="";
+q.opts.forEach(o=>{
+const div=document.createElement("div");
+div.className="option";
+div.innerText=o.t;
+div.onclick=()=>choose(o.w);
+box.appendChild(div);
+});
+}
+
+function choose(w){
+if(w){
+for(const k in w){scores[k]+=w[k];}
+}
+i++;
+if(i<questions.length){render();}else{show();}
+}
+
+function show(){
+document.getElementById("test").classList.remove("active");
+document.getElementById("result").classList.add("active");
+
+let type=Object.keys(scores).reduce((a,b)=>scores[a]>scores[b]?a:b);
+
+const data={
+fox:{
+title:"🦊 想得比做得快的狐狸",
+state:"你能判断什么更有潜力，但很少在不确定时真正下注。",
+risk:"长期停留在判断阶段，潜力容易被消耗在犹豫里。",
+next:"下一步要解决的不是方向，而是：什么时候该动手。"
+},
+turtle:{
+title:"🐢 总想走稳一点的乌龟",
+state:"你对风险非常敏感，很难全力选择任何方向。",
+risk:"回避决策会让选择权慢慢交给环境。",
+next:"你需要弄清楚自己真正能承受的风险边界。"
+},
+monkey:{
+title:"🐒 什么都试过的猴子",
+state:"你行动力很强，但方向经常切换。",
+risk:"努力难以形成累积，容易感到疲惫。",
+next:"你需要学会判断哪些事值得继续，哪些该停下。"
+},
+sheep:{
+title:"🐑 总在参考别人路线的羊",
+state:"你并不差，但很难完全相信自己的判断。",
+risk:"长期依赖外部，会失去方向感。",
+next:"你需要建立一个属于自己的判断体系。"
+}
+};
+
+const r=data[type];
+document.getElementById("rtype").innerText=r.title;
+document.getElementById("rstate").innerText=r.state;
+document.getElementById("rrisk").innerText=r.risk;
+document.getElementById("rnext").innerText=r.next;
+}
+</script>
+</body>
+</html>
