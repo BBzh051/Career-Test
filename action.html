@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进阶测试 | 行为决策模式分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
+        body { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%); color: #333; min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
+        .container { background-color: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 90%; max-width: 800px; padding: 40px; position: relative; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 10px; font-size: 26px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-size: 15px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* 题目样式 */
+        .question-number { font-weight: bold; color: #e74c3c; margin-bottom: 15px; font-size: 18px; }
+        .question-text { font-size: 19px; font-weight: bold; line-height: 1.6; margin-bottom: 25px; color: #333; }
+        .options-vertical { display: flex; flex-direction: column; gap: 15px; }
+        .option-btn { 
+            padding: 15px 20px; 
+            text-align: left; 
+            background: #fff; 
+            border: 2px solid #eee; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-size: 16px; 
+            line-height: 1.5;
+            color: #555;
+        }
+        .option-btn:hover { background: #fff5f5; border-color: #ffcccc; }
+        .option-btn.selected { background: #e74c3c; color: white; border-color: #c0392b; }
+        
+        /* 按钮与进度条 */
+        .btn { display: block; width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 30px; }
+        .btn:hover { background: #34495e; }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .progress-bar { height: 6px; background: #f0f0f0; border-radius: 3px; margin: 20px 0 40px 0; overflow: hidden; }
+        .progress { height: 100%; background: #e74c3c; width: 0%; transition: width 0.3s; }
+
+        /* 结果页样式 */
+        .result-type-title { text-align: center; color: #e74c3c; font-size: 28px; margin: 30px 0; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        .analysis-card { background: #fff; border-left: 5px solid #e74c3c; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 0 10px 10px 0; }
+        .analysis-card h3 { color: #2c3e50; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; }
+        .analysis-card h3::before { content: '📌'; margin-right: 10px; }
+        .analysis-content { line-height: 1.8; color: #444; font-size: 16px; }
+        .highlight { color: #e74c3c; font-weight: bold; background: #fff5f5; padding: 0 5px; }
+        .advice-box { background: #2c3e50; color: #fff; padding: 25px; border-radius: 10px; margin-top: 40px; }
+        .advice-box h3 { color: #f1c40f; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 首页 -->
+        <div id="intro-page" class="page active">
+            <h1>🔍 行为决策模式分析 (进阶版)</h1>
+            <p class="subtitle">分析你的行动逻辑，找到阻碍落地的真正卡点</p>
+            <div style="margin: 40px 0; line-height: 1.8; color: #555;">
+                <p><strong>Hi，欢迎来到职业规划进阶测试。</strong></p>
+                <p>如果你在之前的测试中找到了优势领域，却依然感到：</p>
+                <ul style="margin: 15px 0 15px 20px; color: #e74c3c;">
+                    <li>犹豫不决，迟迟无法开始？</li>
+                    <li>尝试了很多，却总觉得没有积累？</li>
+                    <li>容易受外界影响，不知道自己想要什么？</li>
+                </ul>
+                <p>这个测试将深入你的<strong>潜意识行为模式</strong>，帮你挖出那个“隐形路障”。</p>
+            </div>
+            <button class="btn" onclick="startTest()">开始深度分析</button>
+        </div>
+
+        <!-- 题目页 -->
+        <div id="test-page" class="page">
+            <div class="progress-bar"><div class="progress" id="progress"></div></div>
+            <div class="question-number">Question <span id="current-q">1</span> / 20</div>
+            <div class="question-text" id="question-text"></div>
+            <div class="options-vertical" id="options-container"></div>
+            <!-- 2.0版本改为点击选项直接跳转，不需要下一题按钮，体验更流畅 -->
+        </div>
+
+        <!-- 结果页 -->
+        <div id="result-page" class="page">
+            <div style="text-align: center; color: #999; font-size: 14px; margin-bottom: 10px;">测试结果分析</div>
+            <h2 class="result-type-title" id="result-title"></h2>
+            
+            <div id="result-content">
+                <!-- 动态插入分析内容 -->
+            </div>
+
+            <div class="advice-box">
+                <h3>💡 导师寄语</h3>
+                <p id="result-advice"></p>
+            </div>
+
+            <button class="btn" onclick="location.reload()" style="background:#95a5a6; margin-top:20px;">重新测试</button>
+        </div>
+    </div>
+
+    <script>
+        // 4种类型定义
+        const TYPE_1 = "high_potential"; // 高潜力，低落地型 (想得多做得少)
+        const TYPE_2 = "safety_anxiety"; // 安全焦虑，决策回避型 (怕错，求稳)
+        const TYPE_3 = "high_activity";  // 行动很多，方向混乱型 (乱动，没积累)
+        const TYPE_4 = "ext_dependent";  // 外部依赖，判断失焦型 (随大流，求认可)
+
+        // 题目数据（基于你的图片，我已手动将选项映射到上述4种类型）
+        // 映射逻辑：A/B/C/D 对应不同的行为特质
+        const questions = [
+            {
+                q: "当你面对一个新机会时，你更常见的第一反应是：",
+                options: [
+                    { text: "A. 这个想法本身让我很兴奋", type: TYPE_3 },
+                    { text: "B. 我先看看有没有现实可行性", type: TYPE_1 },
+                    { text: "C. 我会犹豫很久，怕选错", type: TYPE_2 },
+                    { text: "D. 我会等更明确的信号再决定", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "回顾过去几年，你放弃得最多的是：",
+                options: [
+                    { text: "A. 有趣但难变现的想法", type: TYPE_3 },
+                    { text: "B. 稳定但让我感到消耗的路径", type: TYPE_2 },
+                    { text: "C. 还没来得及验证的可能性", type: TYPE_1 },
+                    { text: "D. 我其实很少真正开始过", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "当别人问你“你以后想做什么”时，你内心更接近：",
+                options: [
+                    { text: "A. 有很多方向，但不好解释", type: TYPE_3 },
+                    { text: "B. 有一个大概，但不确定能不能走通", type: TYPE_1 },
+                    { text: "C. 想回避这个问题", type: TYPE_2 },
+                    { text: "D. 有一个明确但自己也没完全信服的答案", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "你更害怕哪一种情况？",
+                options: [
+                    { text: "A. 做着没热情但稳定的事", type: TYPE_3 }, 
+                    { text: "B. 做着喜欢但没安全感的事", type: TYPE_2 },
+                    { text: "C. 选错方向浪费时间", type: TYPE_1 },
+                    { text: "D. 一直在准备，却迟迟没行动", type: TYPE_4 } 
+                ]
+            },
+            {
+                q: "当一个方向开始变难时，你更可能：",
+                options: [
+                    { text: "A. 怀疑是不是不适合我", type: TYPE_1 },
+                    { text: "B. 想办法调整策略继续", type: TYPE_2 }, // 这里B其实是正面反馈，但结合语境可能是为了求稳
+                    { text: "C. 开始被其他可能性吸引", type: TYPE_3 },
+                    { text: "D. 停下来重新思考", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "如果只能用一句话描述你现在的状态：",
+                options: [
+                    { text: "A. 想做点不一样的", type: TYPE_3 },
+                    { text: "B. 想稳住但不想将就", type: TYPE_2 },
+                    { text: "C. 想清楚再行动", type: TYPE_1 },
+                    { text: "D. 想行动但不敢全力", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "你更常停留在哪个阶段？",
+                options: [
+                    { text: "A. 想法构思", type: TYPE_1 },
+                    { text: "B. 资料收集", type: TYPE_4 },
+                    { text: "C. 反复比较", type: TYPE_2 },
+                    { text: "D. 实际尝试", type: TYPE_3 }
+                ]
+            },
+            {
+                q: "当你对一个方向感兴趣时，你通常会：",
+                options: [
+                    { text: "A. 立刻沉浸式了解", type: TYPE_3 },
+                    { text: "B. 先观察别人怎么做", type: TYPE_4 },
+                    { text: "C. 拖一段时间再说", type: TYPE_1 },
+                    { text: "D. 很快被下一个想法吸引", type: TYPE_3 } // 原题D重复了特性，这里归为3
+                ]
+            },
+            {
+                q: "你对“长期坚持同一件事”的真实感受是：",
+                options: [
+                    { text: "A. 如果有意义，我愿意", type: TYPE_1 },
+                    { text: "B. 理论上可以，但现实很难", type: TYPE_3 },
+                    { text: "C. 会感到压抑", type: TYPE_2 },
+                    { text: "D. 不太确定我能不能", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "当你失败或进展不顺时，更容易出现的是：",
+                options: [
+                    { text: "A. 自我否定", type: TYPE_1 },
+                    { text: "B. 怀疑方向", type: TYPE_3 },
+                    { text: "C. 转向新尝试", type: TYPE_3 },
+                    { text: "D. 暂时停摆", type: TYPE_2 }
+                ]
+            },
+            {
+                q: "你更依赖哪一种来推进自己？",
+                options: [
+                    { text: "A. 兴趣驱动", type: TYPE_3 },
+                    { text: "B. 外部反馈", type: TYPE_4 },
+                    { text: "C. 明确结构", type: TYPE_2 },
+                    { text: "D. 情绪状态", type: TYPE_1 }
+                ]
+            },
+            {
+                q: "如果一个项目需要很长时间才见效，你会：",
+                options: [
+                    { text: "A. 觉得值得投入", type: TYPE_1 }, 
+                    { text: "B. 犹豫是否继续", type: TYPE_2 },
+                    { text: "C. 很难坚持", type: TYPE_3 },
+                    { text: "D. 尽量避免这种项目", type: TYPE_2 } 
+                ]
+            },
+            {
+                q: "你怎么看“稳定”这件事？",
+                options: [
+                    { text: "A. 必须有", type: TYPE_2 },
+                    { text: "B. 可以妥协", type: TYPE_4 },
+                    { text: "C. 容易束缚我", type: TYPE_3 },
+                    { text: "D. 我说不清", type: TYPE_1 }
+                ]
+            },
+            {
+                q: "当你想到未来 5 年，最强烈的情绪是：",
+                options: [
+                    { text: "A. 期待", type: TYPE_3 },
+                    { text: "B. 焦虑", type: TYPE_2 },
+                    { text: "C. 模糊", type: TYPE_1 },
+                    { text: "D. 压力", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "你更希望别人如何评价你？",
+                options: [
+                    { text: "A. 有想法", type: TYPE_1 },
+                    { text: "B. 有能力", type: TYPE_3 },
+                    { text: "C. 有成果", type: TYPE_2 }, // 成果意味着安全落地
+                    { text: "D. 有安全感", type: TYPE_4 } // D选项有误，通常没人希望被评价“有安全感”，这里理解为希望别人给安全感，归为4
+                ]
+            },
+            {
+                q: "如果现在必须选一个方向，你更可能因为哪点犹豫？",
+                options: [
+                    { text: "A. 怕不喜欢", type: TYPE_3 },
+                    { text: "B. 怕赚不到钱", type: TYPE_2 },
+                    { text: "C. 怕坚持不了", type: TYPE_1 },
+                    { text: "D. 怕选错", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "你更容易被哪种内容吸引？",
+                options: [
+                    { text: "A. 创意与表达", type: TYPE_1 },
+                    { text: "B. 方法与模型", type: TYPE_2 },
+                    { text: "C. 成功案例", type: TYPE_4 },
+                    { text: "D. 情绪共鸣", type: TYPE_3 }
+                ]
+            },
+            {
+                q: "你是否常觉得“我本可以更好”？",
+                options: [
+                    { text: "A. 经常", type: TYPE_1 },
+                    { text: "B. 偶尔", type: TYPE_2 },
+                    { text: "C. 很少", type: TYPE_3 },
+                    { text: "D. 我不确定", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "如果现在给你一个“低风险尝试一个方向”的机会，你会：",
+                options: [
+                    { text: "A. 很想立刻试", type: TYPE_3 },
+                    { text: "B. 想，但会反复权衡", type: TYPE_1 },
+                    { text: "C. 害怕开始", type: TYPE_2 },
+                    { text: "D. 先观望", type: TYPE_4 }
+                ]
+            },
+            {
+                q: "你做这个测试，更接近的动机是：",
+                options: [
+                    { text: "A. 想确认自己适合什么", type: TYPE_4 },
+                    { text: "B. 想减少选择焦虑", type: TYPE_2 },
+                    { text: "C. 想找到一个可执行方向", type: TYPE_1 },
+                    { text: "D. 想被理解目前的状态", type: TYPE_3 } // 求理解通常是表达型
+                ]
+            }
+        ];
+
+        // 结果数据库（直接使用你的OCR内容）
+        const resultsData = {
+            [TYPE_1]: {
+                title: "高潜力 · 低落地型",
+                status: "你并不是没有方向感的人。<br>你对什么“更有价值”、什么“不值得长期投入”，其实判断得很清楚。<br>真正的问题在于：<br><span class='highlight'>你长期停留在判断阶段，却迟迟没有进入现实验证。</span>",
+                why: "<ul><li>你对很多方向都有判断力，但很难真正下注</li><li>你不甘心把时间投入到一个“可能不够好”的选择</li><li>你习惯先想清楚，再行动</li><li>你常常觉得：再等等，也许会有更好的可能</li></ul>",
+                dilemma: "你现在最大的风险，并不是选错。<br>而是：<strong>你的潜力始终没有接受现实世界的反馈。</strong><br>时间久了，潜力会慢慢变成自我怀疑。",
+                question: "接下来决定你走向的，不是你有多聪明。<br>而是这个问题你是否清楚：<br><strong>你该如何用“最低风险”的方式，把判断变成验证？</strong>",
+                advice: "别再做“思想的巨人”了。本周设定一个不需要完美、不需要长期承诺的微小行动。你的任务不是“做成”，而是“获得反馈”。"
+            },
+            [TYPE_2]: {
+                title: "安全焦虑 · 决策回避型",
+                status: "你并不是不知道自己想要什么。<br>你真正卡住的地方在于：<br><span class='highlight'>你既想要稳定，又不愿意长期压抑自己。</span>",
+                why: "<ul><li>一想到未来，就会不自觉地计算风险</li><li>很难对任何方向“全力以赴”</li><li>容易停在“再等等 / 再看看”</li><li>对选错的代价异常敏感</li></ul>",
+                dilemma: "长期回避决策，并不会让风险消失。<br>它只会让你在不知不觉中，<strong>把选择权交给环境。</strong>",
+                question: "你真正需要弄清楚的不是方向。<br>而是：<br><strong>你对不确定性的真实承受区间到底在哪里？</strong><br>如果不清楚这一点，任何建议都会让你更焦虑。",
+                advice: "安全感不是想出来的，是试出来的。你需要区分“不可逆的风险”和“可承受的试错”。在这个区间内，大胆一点。"
+            },
+            [TYPE_3]: {
+                title: "行动很多 · 方向混乱型",
+                status: "你不是不努力的人。<br>相反，你做过不少尝试，也付出过很多行动。<br>真正的问题是：<br><span class='highlight'>你的行动没有形成累积。</span>",
+                why: "<ul><li>学过很多技能，但很难串成一条线</li><li>做过多个方向，却很难判断该不该继续</li><li>容易在不同路径之间切换</li><li>内心常有“是不是我哪里没坚持好”的挫败感</li></ul>",
+                dilemma: "问题不在于你做得不够。<br>而在于：<strong>你每一次努力，都在为不同的方向服务。</strong>",
+                question: "你真正需要的不是更多行动。<br>而是：<br><strong>判断哪些事情值得继续，哪些应该果断停下。</strong>",
+                advice: "你的行动力是宝贵的资产，但需要聚焦。试着做减法，哪怕只保留一件事，把它做深、做透，产生复利。"
+            },
+            [TYPE_4]: {
+                title: "外部依赖 · 判断失焦型",
+                status: "你并不是没有能力。<br>你真正困扰的是：<br><span class='highlight'>你很难完全相信自己的判断。</span>",
+                why: "<ul><li>非常在意他人的建议与评价</li><li>容易被趋势、成功案例影响方向</li><li>做决定时需要反复确认</li><li>内心常在问：这样选真的对吗？</li></ul>",
+                dilemma: "当判断权长期在外部时，<br>你很难建立属于自己的方向感，<br>也很难对任何选择感到踏实。",
+                question: "你需要的不是一个“标准答案”。<br>而是：<br><strong>一个你真正敢信的判断体系。</strong>",
+                advice: "标准答案只存在于考试中，真实世界只有“适合我的选择”。尝试做一次不问别人、只听自己的小决定，哪怕是错的，那也是属于你的经验。"
+            }
+        };
+
+        // 状态变量
+        let scores = { [TYPE_1]: 0, [TYPE_2]: 0, [TYPE_3]: 0, [TYPE_4]: 0 };
+        let currentQ = 0;
+
+        // 初始化
+        function startTest() {
+            document.getElementById('intro-page').classList.remove('active');
+            document.getElementById('test-page').classList.add('active');
+            showQuestion();
+        }
+
+        // 显示题目
+        function showQuestion() {
+            const q = questions[currentQ];
+            document.getElementById('current-q').textContent = currentQ + 1;
+            document.getElementById('question-text').textContent = q.q;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            // 生成选项
+            q.options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'option-btn';
+                btn.textContent = opt.text;
+                btn.onclick = () => selectOption(opt.type);
+                container.appendChild(btn);
+            });
+
+            // 更新进度
+            const progress = ((currentQ + 1) / questions.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        // 选择选项
+        function selectOption(type) {
+            // 计分
+            scores[type]++;
+            
+            // 下一题
+            if (currentQ < questions.length - 1) {
+                currentQ++;
+                // 增加一点点延迟，让用户感觉到点击了
+                setTimeout(showQuestion, 150);
+            } else {
+                showResult();
+            }
+        }
+
+        // 显示结果
+        function showResult() {
+            document.getElementById('test-page').classList.remove('active');
+            document.getElementById('result-page').classList.add('active');
+
+            // 算出最高分类型
+            let maxScore = 0;
+            let finalType = TYPE_1; // 默认
+            
+            // 简单的比较逻辑，如果有平分，默认取顺序靠前的，或者你可以加随机逻辑
+            for (const [type, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    finalType = type;
+                }
+            }
+
+            const data = resultsData[finalType];
+
+            // 渲染内容
+            document.getElementById('result-title').textContent = data.title;
+            
+            const contentHTML = `
+                <div class="analysis-card">
+                    <h3>你所处的状态</h3>
+                    <div class="analysis-content">${data.status}</div>
+                </div>
+                <div class="analysis-card">
+                    <h3>为什么会这样</h3>
+                    <div class="analysis-content">${data.why}</div>
+                </div>
+                <div class="analysis-card">
+                    <h3>面对的困境与难题</h3>
+                    <div class="analysis-content">${data.dilemma}</div>
+                </div>
+                <div class="analysis-card">
+                    <h3>接下来真正重要的问题</h3>
+                    <div class="analysis-content" style="font-size:18px; color:#2c3e50; font-weight:bold;">${data.question}</div>
+                </div>
+            `;
+            document.getElementById('result-content').innerHTML = contentHTML;
+            document.getElementById('result-advice').textContent = data.advice;
+        }
+    </script>
+</body>
+</html>
