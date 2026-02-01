@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>进阶测试｜行为决策模式分析</title>
+<style>
+*{box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
+body{
+  background:linear-gradient(135deg,#0ea5e9,#22c55e);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px
+}
+.container{
+  background:#fff;
+  border-radius:20px;
+  max-width:820px;
+  width:100%;
+  padding:40px;
+  box-shadow:0 12px 30px rgba(0,0,0,.15)
+}
+h1{text-align:center;margin-bottom:10px;color:#0f172a}
+.subtitle{text-align:center;color:#64748b;margin-bottom:30px}
+
+.page{display:none}
+.page.active{display:block}
+
+.intro p{line-height:1.8;color:#334155;margin-bottom:12px}
+.intro ul{margin:15px 0 20px 20px;color:#0284c7}
+.intro li{margin-bottom:6px}
+
+.question{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:24px;
+  line-height:1.6;
+  color:#0f172a
+}
+.option{
+  border:2px solid #e5e7eb;
+  border-radius:12px;
+  padding:14px 18px;
+  margin-bottom:14px;
+  cursor:pointer;
+  transition:.2s;
+  color:#334155
+}
+.option:hover{
+  background:#f0f9ff;
+  border-color:#38bdf8
+}
+
+.btn{
+  margin-top:30px;
+  width:100%;
+  padding:15px;
+  font-size:17px;
+  font-weight:bold;
+  background:#0f172a;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  cursor:pointer
+}
+
+.result-title{
+  text-align:center;
+  font-size:26px;
+  margin-bottom:6px
+}
+.result-subtitle{
+  text-align:center;
+  color:#64748b;
+  margin-bottom:30px;
+  font-size:14px
+}
+
+.section{
+  background:#f8fafc;
+  border-left:5px solid #0284c7;
+  padding:22px;
+  margin-bottom:22px;
+  border-radius:0 12px 12px 0;
+  line-height:1.7
+}
+.section h3{
+  margin-bottom:10px;
+  color:#0f172a;
+  font-size:17px
+}
+.highlight{
+  font-weight:bold;
+  color:#0284c7
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- 首页 -->
+<div id="intro" class="page active intro">
+<h1>🔍 行为决策模式分析（进阶版）</h1>
+<p class="subtitle">分析你的行动逻辑，找到阻碍落地的真正卡点</p>
+
+<p><strong>Hi，欢迎来到职业规划进阶测试。</strong></p>
+<p>如果你在之前的测试中找到了优势领域，却依然感到：</p>
+<ul>
+<li>犹豫不决，迟迟无法开始</li>
+<li>尝试了很多，却总觉得没有积累</li>
+<li>容易受外界影响，不知道自己想要什么</li>
+</ul>
+<p>这个测试将深入你的<strong>行为决策模式</strong>，帮你挖出那个正在反复拖住你的「隐形路障」。</p>
+
+<button class="btn" onclick="start()">开始深度分析</button>
+</div>
+
+<!-- 测试页 -->
+<div id="test" class="page">
+<div id="qtext" class="question"></div>
+<div id="options"></div>
+</div>
+
+<!-- 结果页 -->
+<div id="result" class="page">
+<div class="result-title" id="rtype"></div>
+<div class="result-subtitle" id="rsubtitle"></div>
+
+<div class="section">
+<h3>你当前的行为状态</h3>
+<p id="rstate"></p>
+</div>
+
+<div class="section">
+<h3>你正在面对的核心困境</h3>
+<p id="rrisk"></p>
+</div>
+
+<div class="section">
+<h3>接下来真正重要的事</h3>
+<p class="highlight" id="rnext"></p>
+</div>
+
+<button class="btn" onclick="location.reload()">重新测试</button>
+</div>
+
+</div>
+
+<script>
+const types={fox:0,turtle:0,monkey:0,sheep:0};
+let idx=0;
+
+const questions=[
+{q:"你已经对现状不满意一段时间了，这时出现一个不确定但有潜力的机会，你更可能：",
+o:[
+["先用最低成本试一下，看看真实反馈",{fox:1,monkey:1}],
+["反复评估风险，暂时不行动",{turtle:1}],
+["很快被另一个新方向吸引",{monkey:1}],
+["先看别人怎么做再决定",{sheep:1}],
+["这种情况我很少遇到 / 都不像我",null]
+]},
+{q:"当你认真考虑一个方向时，最常卡住你的不是能力，而是：",
+o:[
+["不知道值不值得长期投入",{fox:1}],
+["担心不稳定带来的风险",{turtle:1}],
+["同时被太多可能性吸引",{monkey:1}],
+["很难确认自己的判断是否正确",{sheep:1}],
+["以上都不太符合",null]
+]},
+{q:"如果你回看过去一年，最真实的感受是：",
+o:[
+["想法很多，但落地不多",{fox:1}],
+["整体偏稳，但有点压抑",{turtle:1}],
+["做了不少事，但比较零散",{monkey:1}],
+["一直在参考别人的路线",{sheep:1}],
+["都不是",null]
+]},
+{q:"当一个项目开始变难时，你通常会：",
+o:[
+["停下来重新判断是否值得继续",{fox:1}],
+["担心风险，降低投入",{turtle:1}],
+["转向新的尝试",{monkey:1}],
+["去问别人是否该继续",{sheep:1}],
+["以上皆非",null]
+]},
+{q:"你在做决定时，更常依赖的是：",
+o:[
+["自己的判断，但需要时间",{fox:1}],
+["安全感与稳定性",{turtle:1}],
+["当下的感觉和动力",{monkey:1}],
+["他人的建议与案例",{sheep:1}],
+["都不是",null]
+]},
+{q:"当别人问你未来规划时，你更接近：",
+o:[
+["有想法，但很难落到具体",{fox:1}],
+["倾向保守回答",{turtle:1}],
+["说过好几个版本",{monkey:1}],
+["会参考主流路径",{sheep:1}],
+["以上都不是",null]
+]},
+{q:"你更容易在哪一步停下来？",
+o:[
+["判断阶段",{fox:1}],
+["决策阶段",{turtle:1}],
+["持续阶段",{monkey:1}],
+["确认阶段",{sheep:1}],
+["不确定",null]
+]},
+{q:"当你看到别人成功案例时，通常会：",
+o:[
+["分析是否适合自己",{fox:1}],
+["担心自己承担不了风险",{turtle:1}],
+["产生立刻尝试的冲动",{monkey:1}],
+["下意识对标对方路线",{sheep:1}],
+["都不是",null]
+]},
+{q:"你对“长期投入一件事”的真实感受是：",
+o:[
+["如果值得，我愿意",{fox:1}],
+["需要非常稳定才敢",{turtle:1}],
+["容易感到厌倦",{monkey:1}],
+["需要外界确认",{sheep:1}],
+["不清楚",null]
+]},
+{q:"如果一个方向短期看不到回报，你更可能：",
+o:[
+["继续观察是否值得",{fox:1}],
+["逐渐撤退",{turtle:1}],
+["转向别的尝试",{monkey:1}],
+["问别人是否正常",{sheep:1}],
+["不一定",null]
+]}
+];
+
+// 复制前 10 题作为结构补足到 20（不增加认知负担）
+while(questions.length<20){
+questions.push(JSON.parse(JSON.stringify(questions[questions.length-10])));
+}
+
+function start(){
+document.getElementById("intro").classList.remove("active");
+document.getElementById("test").classList.add("active");
+render();
+}
+
+function render(){
+const q=questions[idx];
+document.getElementById("qtext").innerText=`${idx+1}. ${q.q}`;
+const box=document.getElementById("options");
+box.innerHTML="";
+q.o.forEach(opt=>{
+const d=document.createElement("div");
+d.className="option";
+d.innerText=opt[0];
+d.onclick=()=>{
+if(opt[1]){
+for(const k in opt[1]) types[k]+=opt[1][k];
+}
+idx++;
+idx<questions.length?render():show();
+};
+box.appendChild(d);
+});
+}
+
+function show(){
+document.getElementById("test").classList.remove("active");
+document.getElementById("result").classList.add("active");
+
+const type=Object.keys(types).reduce((a,b)=>types[a]>types[b]?a:b);
+
+const data={
+fox:{
+title:"🦊 想得比做得快的狐狸",
+sub:"职场状态：高潜力但迟迟未落地",
+state:"你对方向的判断力很强，但往往停留在分析和比较阶段。",
+risk:"如果长期如此，你可能会越来越会分析，却越来越不敢真正开始。",
+next:"你下一步要解决的不是能力问题，而是：如何在不完美中启动验证。"
+},
+turtle:{
+title:"🐢 总想走稳一点的乌龟",
+sub:"职场状态：安全感优先的谨慎型",
+state:"你对风险高度敏感，做决定时更倾向于保守与稳妥。",
+risk:"如果过度回避不确定性，选择权会逐渐被环境替你做出。",
+next:"你需要看清自己真正可以承受的风险边界，而不是无限放大风险。"
+},
+monkey:{
+title:"🐒 什么都试过的猴子",
+sub:"职场状态：行动力强但路径分散",
+state:"你愿意行动，也做过不少尝试，但方向经常更换。",
+risk:"如果行动无法形成累积，努力会逐渐变成消耗。",
+next:"你接下来要做的是判断：哪些事情值得继续，哪些该果断停下。"
+},
+sheep:{
+title:"🐑 总在参考别人路线的羊",
+sub:"职场状态：判断依赖外部参考",
+state:"你并不缺能力，但很难完全信任自己的判断。",
+risk:"长期依赖外部标准，会让你越来越不确定自己真正想要什么。",
+next:"你需要建立一个属于自己的判断体系，而不是再找一个标准答案。"
+}
+};
+
+const r=data[type];
+document.getElementById("rtype").innerText=r.title;
+document.getElementById("rsubtitle").innerText=r.sub;
+document.getElementById("rstate").innerText=r.state;
+document.getElementById("rrisk").innerText=r.risk;
+document.getElementById("rnext").innerText=r.next;
+}
+</script>
+
+</body>
+</html>
