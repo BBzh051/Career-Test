@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天赋测试 | 找到你的优势领域</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 800px;
+            padding: 40px;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .question-container {
+            margin: 25px 0;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        .question-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .option {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px;
+            text-align: center;
+            background: #f1f2f6;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            border: 2px solid #e0e0e0;
+        }
+        .option:hover {
+            background: #e3f2fd;
+        }
+        .option.selected {
+            background: #3498db !important;
+            color: white;
+            border-color: #2980b9;
+        }
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #27ae60;
+        }
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 30px 0;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: #3498db;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        /* 结果页样式 */
+        #result-page h2 {
+            text-align: center;
+            color: #e74c3c;
+            margin: 20px 0;
+        }
+        .result-card {
+            background: #f8f9fa;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .dimension {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .score-bar {
+            height: 25px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            text-align: right;
+            color: white;
+            padding-right: 10px;
+            font-weight: bold;
+            line-height: 25px;
+        }
+        .top3 {
+            background: #fff9e6;
+            border-left: 5px solid #f1c40f;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .top3 h3 {
+            color: #e67e22;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+        .advice {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            line-height: 1.8;
+        }
+        .restart-btn {
+            background: #e74c3c;
+            margin-top: 30px;
+        }
+        .restart-btn:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面1：引言 -->
+        <div id="intro-page" class="page active">
+            <h1>🌟 天赋测试：找到你的优势领域</h1>
+            <p class="subtitle">由职业规划导师精心设计 | 20题快速测评 | 5分钟完成</p>
+            <div style="margin: 30px 0; line-height: 1.8;">
+                <p>✨ <strong>为什么做这个测试？</strong></p>
+                <p>每个人的天赋领域不同，找到它能让你：</p>
+                <ul style="margin-left: 30px; margin-top: 10px;">
+                    <li>更快进入职业“舒适区”，事半功倍</li>
+                    <li>避开不适合的领域，减少无效努力</li>
+                    <li>在求职/升学中精准定位优势</li>
+                </ul>
+                <p style="margin-top: 20px; color: #e74c3c; font-weight: bold;">
+                    请根据你的<strong>真实感受</strong>作答（没有标准答案！）
+                </p>
+            </div>
+            <button class="btn" onclick="startTest()">开始测试</button>
+        </div>
+
+        <!-- 测试页面 -->
+        <div id="test-page" class="page">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="question-container">
+                <div class="question-number">题目 <span id="current-q">1</span> / 20</div>
+                <div class="question-text" id="question-text"></div>
+                <div class="options" id="options-container"></div>
+                <div class="scale-labels">
+                    <span>1 = 完全不符合我</span>
+                    <span>5 = 非常符合我</span>
+                </div>
+            </div>
+            <button class="btn" id="next-btn" onclick="nextQuestion()" disabled>下一题</button>
+        </div>
+
+        <!-- 结果页面 -->
+        <div id="result-page" class="page">
+            <h2>🎯 你的天赋优势分析报告</h2>
+            <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px;">基于你的回答，以下是你的优势领域分布（满分100分）</p>
+            
+            <div id="dimensions-result"></div>
+
+            <div class="top3">
+                <h3>🏆 你的TOP 3 优势领域</h3>
+                <div id="top3-list"></div>
+            </div>
+
+            <div class="advice">
+                <h4>💡 专业导师给你的发展建议：</h4>
+                <p id="advice-text"></p>
+            </div>
+
+            <button class="btn restart-btn" onclick="restartTest()">重新测试</button>
+        </div>
+    </div>
+
+    <script>
+        // 测试题库（20题）
+        const questions = [
+            { id: 1,  text: "我擅长通过数据、图表或逻辑推理解决复杂问题。" },
+            { id: 2,  text: "我经常想出新颖的点子或解决方案，别人觉得很有创意。" },
+            { id: 3,  text: "在团队中，我常常是协调者，能化解矛盾让大家合作顺畅。" },
+            { id: 4,  text: "动手操作机械、电子设备或进行手工制作时，我感到非常专注且得心应手。" },
+            { id: 5,  text: "我表达清晰，写作或口头陈述时能准确传达观点，听众容易理解。" },
+            { id: 6,  text: "当团队需要做决定时，我能快速分析利弊并做出果断决策。" },
+            { id: 7,  text: "我对美学、色彩、音乐或艺术创作有浓厚兴趣，且有一定造诣。" },
+            { id: 8,  text: "我能敏锐察觉他人的情绪变化，并主动提供帮助。" },
+            { id: 9,  text: "拆解、组装、修理物品或进行实验时，我享受其中。" },
+            { id: 10, text: "在公开场合发言或教别人时，我能自信、流畅地表达。" },
+            { id: 11, text: "我喜欢研究抽象理论、数学公式或科学原理。" },
+            { id: 12, text: "我能将枯燥的工作转化为有趣的挑战，保持创新。" },
+            { id: 13, text: "朋友常来找我倾诉烦恼，因为他们认为我能给出好建议。" },
+            { id: 14, text: "使用工具、编程或进行技术操作时，我进步很快。" },
+            { id: 15, text: "写作、翻译或讲故事是我的强项，语言组织能力强。" },
+            { id: 16, text: "在紧急情况下，我能冷静下来，迅速组织资源解决问题。" },
+            { id: 17, text: "设计（平面、服装、产品等）或表演艺术是我的爱好。" },
+            { id: 18, text: "我善于说服他人，能影响别人的决定或行为。" },
+            { id: 19, text: "动手制作模型、修理家电或进行户外探险活动时，我感到满足。" },
+            { id: 20, text: "我能用简单易懂的语言解释复杂的概念给别人听。" }
+        ];
+
+        // 维度映射（每道题对应哪个维度）
+        const dimensionMap = {
+            1: "逻辑分析力",
+            2: "创造力与艺术天赋",
+            3: "人际影响力",
+            4: "动手实践力",
+            5: "语言与表达力",
+            6: "领导力与决策力",
+            7: "创造力与艺术天赋",
+            8: "人际影响力",
+            9: "动手实践力",
+            10: "语言与表达力",
+            11: "逻辑分析力",
+            12: "创造力与艺术天赋",
+            13: "人际影响力",
+            14: "动手实践力",
+            15: "语言与表达力",
+            16: "领导力与决策力",
+            17: "创造力与艺术天赋",
+            18: "人际影响力",
+            19: "动手实践力",
+            20: "语言与表达力"
+        };
+
+        // 存储答案
+        let answers = {};
+        let currentQ = 0;
+
+        // 初始化测试
+        function startTest() {
+            document.getElementById('intro-page').classList.remove('active');
+            document.getElementById('test-page').classList.add('active');
+            showQuestion();
+        }
+
+        // 显示题目
+        function showQuestion() {
+            const q = questions[currentQ];
+            document.getElementById('current-q').textContent = currentQ + 1;
+            document.getElementById('question-text').textContent = q.text;
+            
+            // 创建选项按钮 (1~5)
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= 5; i++) {
+                const option = document.createElement('div');
+                option.className = 'option';
+                option.textContent = i;
+                option.dataset.value = i;
+                
+                // 如果已答过，显示选中状态
+                if (answers[q.id] === i) {
+                    option.classList.add('selected');
+                }
+                
+                option.onclick = function() {
+                    // 清除其他选项的选中
+                    document.querySelectorAll('.option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    answers[q.id] = i;
+                    document.getElementById('next-btn').disabled = false;
+                };
+                optionsContainer.appendChild(option);
+            }
+            
+            // 更新进度条
+            const progress = ((currentQ + 1) / questions.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        // 下一题
+        function nextQuestion() {
+            if (currentQ < questions.length - 1) {
+                currentQ++;
+                showQuestion();
+                // 重置下一题按钮状态
+                document.getElementById('next-btn').disabled = true;
+            } else {
+                // 测试完成，显示结果
+                calculateResult();
+            }
+        }
+
+        // 计算结果
+        function calculateResult() {
+            // 初始化维度分数
+            const dimensions = {
+                "逻辑分析力": 0,
+                "创造力与艺术天赋": 0,
+                "人际影响力": 0,
+                "动手实践力": 0,
+                "语言与表达力": 0,
+                "领导力与决策力": 0
+            };
+            const dimCount = {
+                "逻辑分析力": 0,
+                "创造力与艺术天赋": 0,
+                "人际影响力": 0,
+                "动手实践力": 0,
+                "语言与表达力": 0,
+                "领导力与决策力": 0
+            };
+
+            // 统计每道题的答案
+            for (const qid in answers) {
+                const dim = dimensionMap[qid];
+                dimensions[dim] += answers[qid];
+                dimCount[dim]++;
+            }
+
+            // 计算平均分（转换为百分制，满分100）
+            const result = {};
+            for (const dim in dimensions) {
+                const avg = dimensions[dim] / dimCount[dim]; // 平均分 (1~5)
+                result[dim] = Math.round((avg / 5) * 100); // 转为百分比
+            }
+
+            // 排序，找出TOP3
+            const sorted = Object.entries(result).sort((a, b) => b[1] - a[1]);
+            const top3 = sorted.slice(0, 3).map(item => ({name: item[0], score: item[1]}));
+
+            // 显示结果
+            showResult(result, top3);
+        }
+
+        // 显示结果页
+        function showResult(result, top3) {
+            document.getElementById('test-page').classList.remove('active');
+            document.getElementById('result-page').classList.add('active');
+
+            // 维度分数条
+            const dimResultHTML = '';
+            for (const [dim, score] of Object.entries(result)) {
+                dimResultHTML += `
+                <div class="result-card">
+                    <div class="dimension">${dim}</div>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${score}%">${score}分</div>
+                    </div>
+                </div>
+                `;
+            }
+            document.getElementById('dimensions-result').innerHTML = dimResultHTML;
+
+            // TOP3
+            let top3HTML = '';
+            top3.forEach((item, index) => {
+                let medal = '';
+                if(index===0) medal = '🥇';
+                else if(index===1) medal = '🥈';
+                else if(index===2) medal = '🥉';
+                top3HTML += `<p><strong>${medal} ${item.name}</strong> — ${item.score}分</p>`;
+            });
+            document.getElementById('top3-list').innerHTML = top3HTML;
+
+            // 个性化建议
+            const adviceMap = {
+                "逻辑分析力": "你的分析能力突出！建议深入数据分析、工程、科研、金融建模等领域。可学习Python、统计学、逻辑学，考取CFA、精算师等证书。",
+                "创造力与艺术天赋": "天生的创意大师！适合设计、广告、影视、艺术创作、创业创新。多参与跨界项目，建立作品集，关注行业设计奖项。",
+                "人际影响力": "你善于理解他人！教育、心理咨询、社工、人力资源、销售管理是你的强项。提升倾听技巧，学习NLP或心理学课程。",
+                "动手实践力": "动手能力一流！机械、电子、建筑、工匠类工作、实验室技术员都很适合。考取工信部认证证书，积累实操项目经验。",
+                "语言与表达力": "表达大师！媒体、翻译、法律、教师、公关文案是你的舞台。精进外语能力，学习播音主持或法律文书写作。",
+                "领导力与决策力": "天生的领导者！企业管理、创业、项目管理、政府事务是你的方向。学习MBA课程，锻炼战略思维，积累团队管理经验。"
+            };
+
+            let adviceText = `基于你的<strong>${top3[0].name}</strong>优势，导师建议：<br><br>${adviceMap[top3[0].name]}<br><br>`;
+            adviceText += `同时，你的<strong>${top3[1].name}</strong>和<strong>${top3[2].name}</strong>也很突出，建议在职业规划中结合这三大优势，形成独特的竞争力组合！`;
+            
+            document.getElementById('advice-text').innerHTML = adviceText;
+        }
+
+        // 重新测试
+        function restartTest() {
+            answers = {};
+            currentQ = 0;
+            document.getElementById('result-page').classList.remove('active');
+            document.getElementById('intro-page').classList.add('active');
+        }
+    </script>
+</body>
+</html>
